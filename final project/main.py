@@ -3,7 +3,7 @@ import random
 
 WIDTH = 480
 HEIGHT = 600
-FPS = 30
+FPS = 45
 
 # Задаем цвета
 WHITE = (255, 255, 255)
@@ -21,6 +21,28 @@ pygame.display.set_caption("Shmup!")
 clock = pygame.time.Clock()
 
 font_name = pygame.font.match_font('arial')
+
+def show_go_screen():
+    screen.blit(background, background_rect)
+    for i in best_scores.keys():
+        if i == 0:
+            pass
+        else:
+            draw_text(screen, "attempt {0}: {1}".format(i, best_scores.get(i)), 15, 50, 20 + 30 * i)
+    draw_text(screen, "SHMUP!", 64, WIDTH / 2, HEIGHT / 4)
+    draw_text(screen, "Arrow keys move, Space to fire", 22,
+              WIDTH / 2, HEIGHT / 2)
+    draw_text(screen, "Press a key to begin", 18, WIDTH / 2, HEIGHT * 3 / 4)
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                waiting = False
+
 def draw_text(surf, text, size, x, y):
     font = pygame.font.Font(font_name, size)
     text_surface = font.render(text, True, WHITE)
@@ -48,7 +70,7 @@ background = pygame.image.load("Backgrounds/purple.png").convert()
 background_rect = background.get_rect()
 background = pygame.transform.scale(background, (WIDTH, HEIGHT))
 
-player_img = pygame.image.load("PNG/playerShip1_blue.png").convert()
+player_img = pygame.image.load("PNG/playerShip3_red.png").convert()
 meteor_img = pygame.image.load("PNG/Meteors/meteorBrown_med1.png").convert()
 bullet_img = pygame.image.load("PNG/Lasers/laserRed16.png").convert()
 
@@ -61,7 +83,10 @@ meteor_images = []
 meteor_list =['meteorBrown_big1.png','meteorBrown_med1.png',
               'meteorBrown_med1.png','meteorBrown_med3.png',
               'meteorBrown_small1.png','meteorBrown_small2.png',
-              'meteorBrown_tiny1.png']
+              'meteorBrown_tiny1.png', 'meteorGrey_big1.png',
+              'meteorGrey_med1.png','meteorGrey_med2.png',
+              'meteorGrey_small1.png','meteorGrey_small2.png',
+              'meteorGrey_tiny1.png']
 for img in meteor_list:
     meteor_images.append(pygame.image.load("PNG/Meteors/" + img).convert())
 
@@ -161,7 +186,24 @@ pygame.mixer.music.play(loops=-1)
 score = 0
 
 running = True
+game_over = True
+best_scores = {}
+n = 0
 while running:
+    if game_over:
+        best_scores[n] = score
+        n += 1
+        show_go_screen()
+        game_over = False
+        all_sprites = pygame.sprite.Group()
+        mobs = pygame.sprite.Group()
+        bullets = pygame.sprite.Group()
+        powerups = pygame.sprite.Group()
+        player = Player()
+        all_sprites.add(player)
+        for i in range(8):
+            newmob()
+        score = 0
     # Держим цикл на правильной скорости
     clock.tick(FPS)
     # Ввод процесса (события)
@@ -188,7 +230,7 @@ while running:
         player.shield -= hit.radius * 2
         newmob()
         if player.shield <= 0:
-            running = False
+            game_over = True
 
     # Рендеринг
     screen.fill(BLACK)
@@ -196,7 +238,7 @@ while running:
     all_sprites.draw(screen)
     draw_text(screen, str(score), 18, WIDTH / 2, 10)
     draw_shield_bar(screen, 5, 5, player.shield)
-    
+
     # После отрисовки всего, переворачиваем экран
     pygame.display.flip()
 
